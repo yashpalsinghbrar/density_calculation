@@ -13,3 +13,7 @@ df_glucose = pd.read_excel(file_path, sheet_name=0)  # sheet_name=0 reads the fi
 
 matrix_glucose = df_glucose.values  # Converts DataFrame to NumPy array (2D matrix)
 matrix_glucose = matrix_glucose[2:,:]
+
+option = int(input('Please choose the chemical - \n1. D-Glucose\n2. Sucrose\nEnter Option: '))
+conc = float(input('Please enter the concentration of the Solution (in M): '))
+print(conc)
