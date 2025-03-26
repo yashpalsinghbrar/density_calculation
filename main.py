@@ -1,5 +1,5 @@
 import pandas as pd
-import numpy as np
+from scipy.interpolate import interp1d
 
 # Read and clean sucrose data
 file_path = 'sucrose_de_e.xls'
@@ -14,6 +14,15 @@ df_glucose = pd.read_excel(file_path, sheet_name=0)
 matrix_glucose = df_glucose.values[2:,:]
 glucose_ww = pd.to_numeric(matrix_glucose[:,0], errors='coerce')
 glucose_d = pd.to_numeric(matrix_glucose[:,1], errors='coerce')
+
+# Read and clean sucrose data
+file_path = 'sucrose_viscosity.xlsx'
+df_sucrose = pd.read_excel(file_path, sheet_name=0)
+matrix_sucrose_v = df_sucrose.values[2:,:]
+sucrose_ww_v = pd.to_numeric(matrix_sucrose_v[:,0], errors='coerce')
+sucrose_v = pd.to_numeric(matrix_sucrose_v[:,1], errors='coerce')
+v_water = 1.0020 #Viscosity of water
+sucrose_v = v_water * sucrose_v
 
 # Input validation
 while True:
@@ -39,12 +48,10 @@ while True:
 mw_sucrose = 342.296
 mw_glucose = 180.16
 
-# Polynomial fits (degree 4)
-degree = 4
-coeff_g = np.polyfit(glucose_ww, glucose_d, degree)
-coeff_s = np.polyfit(sucrose_ww, sucrose_d, degree)
-f_glucose = np.poly1d(coeff_g)
-f_sucrose = np.poly1d(coeff_s)
+# Ieterpolation
+f_glucose = interp1d(glucose_ww, glucose_d, kind='cubic', bounds_error=False, fill_value="extrapolate")
+f_sucrose = interp1d(sucrose_ww, sucrose_d, kind='cubic', bounds_error=False, fill_value="extrapolate")
+interp_sucrose_vis = interp1d(sucrose_ww_v, sucrose_v, kind='cubic', bounds_error=False, fill_value="extrapolate")
 
 # Calculate density
 volume = 1000  # 1L in mL
@@ -79,4 +86,10 @@ for i in range(100):
     if abs(density - old_density) < tolerance:
         break
 
-print(f'% w/w of {name} solution is {per_w_by_w:.2f}%. Density of {name} solution is {density} g/mL.')
+# Calculate Viscosity
+if option == 1:
+    print(f'% w/w of {name} solution is {per_w_by_w:.2f}%. Density of {name} solution is {density} g/mL.')
+else:
+    viscosity = interp_sucrose_vis(per_w_by_w)
+    print(f'% w/w of {name} solution is {per_w_by_w:.2f}%. Density of {name} solution is {density} g/mL. Viscocity of {name} solution is {viscosity} mPa.S.')
+
